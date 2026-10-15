@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-15 — Verification and safety maintenance
+
+- Reproduced and fixed corrupted booking-history fail-open, preventing duplicate sends when state.json cannot be parsed.
+- Reproduced and fixed privacy checker staged-versus-worktree mismatch; added numeric identifier detection for CI without private settings.
+- Added synthetic no-network sender boundary tests (pause, duplicate, stale settings, skip day, expired time and nominal submission).
+- Expanded CI to install pinned runtime dependencies and test on Linux and Windows, including Windows PowerShell script parsing.
+- Verified a real enabled-state CLI toggle and live Task Scheduler send-time update, then restored the default schedule and indefinite pause.
+- Verified saved Messenger login with the read-only --check-auth path; composer was available, with no booking sent.
+
 ## 2026-10-15 — Configurable CLI and private repository preparation
 
 - Added a text-only booking menu for weekly slots, calendar-date overrides/skips, send time, and enable/disable actions.

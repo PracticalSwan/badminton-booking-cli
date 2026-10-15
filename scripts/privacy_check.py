@@ -14,6 +14,7 @@ BLOCKED = (
 )
 SUSPECT = (re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
            re.compile(r"(?i)(?:gho_|ghp_|github_pat_|sk-proj-)[A-Za-z0-9_-]{8,}"))
+IDENTIFIER = re.compile(r"(?<![0-9])[0-9]{7,16}(?![0-9])")
 
 
 def main() -> int:
@@ -35,11 +36,13 @@ def main() -> int:
         if normalized in BLOCKED or any(normalized.startswith(prefix) for prefix in BLOCKED if prefix.endswith("/")):
             errors.append(f"Forbidden tracked path: {normalized}")
             continue
-        full = ROOT / normalized
+        # Audit the exact staged Git blob, not the potentially different worktree file.
         try:
-            content = full.read_text(encoding="utf-8")
-        except (UnicodeError, OSError):
-            errors.append(f"Unreadable/binary tracked file: {normalized}")
+            blob = subprocess.run(["git", "show", ":" + normalized], cwd=ROOT,
+                                  check=True, capture_output=True).stdout
+            content = blob.decode("utf-8")
+        except (UnicodeError, OSError, subprocess.CalledProcessError):
+            errors.append(f"Unreadable/binary staged file: {normalized}")
             continue
         for marker in sensitive:
             if marker and marker in content:
@@ -47,6 +50,8 @@ def main() -> int:
                 break
         if any(pattern.search(content) for pattern in SUSPECT):
             errors.append(f"Possible credential in: {normalized}")
+        if any(set(m.group()) != {"0"} for m in IDENTIFIER.finditer(content)):
+            errors.append(f"Possible student or conversation numeric identifier in: {normalized}")
     if errors:
         print("PRIVACY CHECK FAILED:\n" + "\n".join(errors), file=sys.stderr)
         return 1

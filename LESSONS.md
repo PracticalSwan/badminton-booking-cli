@@ -10,3 +10,8 @@ Read at the start of every maintenance task. Add only evidence-backed findings.
 - The safety test for a paused sender must exit without launching a browser or sending a message.
 - Real Task Scheduler integration confirmed the send-time edit moved the trigger from 07:59 to 08:04 (send 08:05), then restored 07:59 (send 08:00); PAUSED and Disabled remained unchanged.
 - Default-time assertions in self-tests would break after users customize their slots; test current config validity and keep fixed sample expectations in a dedicated test fixture.
+- Reproduced: invalid JSON in local state.json was interpreted as an empty state, allowing another booking attempt. Fail closed when existing history is unreadable/invalid.
+- Reproduced: the initial Git privacy script inspected working files instead of staged blobs, allowing a staged identifier leak to pass when the worktree was cleaned. Scan the Git index and test index/worktree divergence.
+- GitHub CI needs pinned Playwright installed because synthetic sender tests import booking.py; Windows should also parse PowerShell scripts in CI.
+- Real Windows enabled-state roundtrip: setting send to 08:07 produced Task Scheduler 08:06 without disabling it; 08:00/07:59 and Disabled + PAUSED were restored. For PowerShell empty objects, inspect property counts using @($obj.PSObject.Properties).Count rather than relying on ambiguous property enumeration.
+- Read-only Messenger --check-auth verified the composer was available; this is **not** evidence that actual Enter submission or court reservation succeeded.

@@ -72,13 +72,13 @@ class ScheduleTests(unittest.TestCase):
     def test_private_settings_and_message_template(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "private.json"
-            data = {"chat_url": "https://www.facebook.com/messages/t/123456789",
+            data = {"chat_url": "https://www.facebook.com/messages/t/0000000",
                     "student_ids": ["100001", "100002"]}
             path.write_text(json.dumps(data), encoding="utf-8")
             self.assertEqual(load_private(path), data)
             self.assertEqual(compose_message({"start": "15:30", "end": "17:00"}, data),
                              "Booking Badminton Court  3:30 PM to 5:00 PM  100001 100002")
-            data["chat_url"] = "https://evil.example/messages/t/123456789"
+            data["chat_url"] = "https://evil.example/messages/t/0000000"
             path.write_text(json.dumps(data), encoding="utf-8")
             with self.assertRaises(ConfigError):
                 load_private(path)

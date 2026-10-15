@@ -31,7 +31,7 @@ The Task Scheduler task is named **Badminton Court Booking**. It launches one mi
 
 If moving to a new PC, copy the example to booking.private.json and enter the actual recipient URL and numeric student IDs, then authenticate manually. Never put Facebook passwords in that file. For the existing PC, the original private settings are preserved locally and Git-ignored.
 
-Changing a setting **does not enable** sending. While PAUSED exists, manually started booking.py also exits without opening Messenger. Edits sync the Windows scheduler trigger and preserve its disabled state. If syncing fails, the manager attempts to disable automation, and displays an error. Already-sent dates are not resent just because settings changed.
+Changing a setting **does not enable** sending. While PAUSED exists, manually started booking.py also exits without opening Messenger. Edits sync the Windows scheduler trigger and preserve its disabled state. If syncing fails, the manager attempts to disable automation, and displays an error. Already-sent dates are not resent just because settings changed. If booking history is corrupted or unreadable, sending is deliberately blocked until history is repaired to avoid a duplicate booking message.
 
 ## Files
 
@@ -42,7 +42,8 @@ Changing a setting **does not enable** sending. While PAUSED exists, manually st
 - enable_booking.ps1 / sync_schedule.ps1: Task Scheduler install and trigger updates
 - Manage Badminton Booking.cmd: launcher inside project
 - scripts/install_desktop_launcher.ps1: installer for the existing Desktop launcher
-- tests: unit and CLI tests
+- tests: unit, CLI and mocked no-network sender boundary tests
+- .github/workflows/verify.yml: Windows/Linux unit and privacy tests, plus PowerShell parser verification
 - AGENTS.md / LESSONS.md / CHANGELOG.md / MEMORY.md: required workflow references
 
 ## Tests and privacy
@@ -60,6 +61,8 @@ The last command must return "Booking automation is paused. Nothing sent." if PA
     git ls-files
 
 Do not stage booking.private.json, auth.ok, state.json, PAUSED, session directories or logs, even in a PRIVATE repository. No automated live Messenger sends are permitted during verification.
+
+A non-sending authentication check is available via `.venv\Scripts\python.exe booking.py --check-auth`; it opens the locally authenticated Chrome profile, navigates to Messenger, verifies the composer, and closes the browser. This does not establish that a message was delivered or that a court was booked.
 
 ## Maintenance
 

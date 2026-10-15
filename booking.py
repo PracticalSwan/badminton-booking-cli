@@ -37,10 +37,12 @@ def load_state() -> dict:
     if not STATE_FILE.exists():
         return {}
     try:
-        data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) else {}
-    except (OSError, json.JSONDecodeError):
-        return {}
+        data = json.loads(STATE_FILE.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ConfigError("Cannot read booking history; send blocked to prevent duplicates.") from exc
+    if not isinstance(data, dict) or not isinstance(data.get("last_sent_date"), str):
+        raise ConfigError("Booking history is invalid; send blocked to prevent duplicates.")
+    return data
 
 
 def sent_today(day: date) -> bool:

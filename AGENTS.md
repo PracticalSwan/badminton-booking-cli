@@ -15,7 +15,7 @@
 - schedule.json version 1: send_time as HH:MM, weekly with all seven lowercase weekdays as slot/start/end or null, overrides with YYYY-MM-DD keys pointing to slot or null.
 - Date overrides win; 00:00 send time and overnight court intervals are not supported.
 - Scheduler starts one minute before send; five-minute send cutoff, Asia/Bangkok timezone, duplicate-date prevention.
-- Sender checks PAUSED at startup and immediately before Enter; abort if schedule changes while preparing.
+- Sender checks PAUSED at startup and immediately before Enter; abort if schedule changes while preparing. Invalid or unreadable booking history **must block sending** to avoid an accidental duplicate.
 - Editing settings must not unpause. stop_booking.ps1 creates PAUSED and disables; start_booking.ps1 explicitly enables and removes PAUSED. sync_schedule.ps1 updates the trigger while preserving disabled state.
 
 ## Protected and forbidden data
@@ -26,6 +26,6 @@ Never commit, publish or print browser profiles, cookies, sessions, booking.priv
 
 - Parse and test Python and PowerShell; test valid/invalid times, date overrides, skipped dates, CLI edits and explicit enable guard.
 - Verify Desktop launcher and preserved task state. Do not send actual Facebook messages in automated tests. Live UI/send behavior is not proven by local tests.
-- Inspect intended changes and staging, privacy audit, then commit/push when authorized (this maintenance pass includes authorization).
+- Inspect intended changes and staging, privacy audit, then commit/push when authorized (this maintenance pass includes authorization). The privacy audit must inspect **staged Git blobs**, not just working-tree files, and reject real-looking numeric identifiers even when no private config exists (such as on CI).
 - Verify the remote is PRIVATE and the remote HEAD matches. No force-push or history rewriting.
 - Report concrete verification limits and unfinished work. Do not claim remote success unless verified.
