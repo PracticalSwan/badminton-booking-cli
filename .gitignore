@@ -1,0 +1,37 @@
+# Identity, authentication, Facebook browser profiles
+booking.private.json
+auth.ok
+browser_profile/
+chrome_profile/
+*.sqlite
+*.sqlite3
+
+# Live state and booking history
+PAUSED
+state.json
+booking.log
+task_console.log
+*.log
+
+# Python / tooling
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.env
+.env.*
+!.env.example
+.ai-bridge/
+.codexpro/
+*.tmp
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
