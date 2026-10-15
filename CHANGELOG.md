@@ -8,6 +8,7 @@
 - Expanded CI to install pinned runtime dependencies and test on Linux and Windows, including Windows PowerShell script parsing.
 - Verified a real enabled-state CLI toggle and live Task Scheduler send-time update, then restored the default schedule and indefinite pause.
 - Verified saved Messenger login with the read-only --check-auth path; composer was available, with no booking sent.
+- Updated official GitHub Actions to immutable current Node 24 release commits and pinned Ubuntu 24.04 to avoid scheduled ubuntu-latest migration; adjusted numeric-ID privacy detection to exclude hex SHA substrings.
 
 ## 2026-10-15 — Configurable CLI and private repository preparation
 

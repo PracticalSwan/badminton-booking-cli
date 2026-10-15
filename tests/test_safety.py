@@ -60,5 +60,21 @@ class SafetyTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0, "CI must block numeric identifiers without private file")
 
 
+    def test_privacy_check_does_not_mistake_hex_sha_for_student_id(self):
+        with tempfile.TemporaryDirectory() as td:
+            repo = Path(td)
+            (repo / "scripts").mkdir()
+            source = (ROOT / "scripts" / "privacy_check.py").read_text(encoding="utf-8")
+            (repo / "scripts" / "privacy_check.py").write_text(source, encoding="utf-8")
+            pseudo_sha = "a" + ("1" * 7) + "f"
+            (repo / "tracked.txt").write_text("immutable action sha: " + pseudo_sha, encoding="utf-8")
+            subprocess.run(["git", "init", "-q"], cwd=repo, check=True, capture_output=True)
+            subprocess.run(["git", "add", "tracked.txt", "scripts/privacy_check.py"],
+                           cwd=repo, check=True, capture_output=True)
+            result = subprocess.run([sys.executable, str(repo / "scripts" / "privacy_check.py")],
+                                    cwd=repo, text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, "Hex hash should not be misidentified: " + result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

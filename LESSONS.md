@@ -15,3 +15,4 @@ Read at the start of every maintenance task. Add only evidence-backed findings.
 - GitHub CI needs pinned Playwright installed because synthetic sender tests import booking.py; Windows should also parse PowerShell scripts in CI.
 - Real Windows enabled-state roundtrip: setting send to 08:07 produced Task Scheduler 08:06 without disabling it; 08:00/07:59 and Disabled + PAUSED were restored. For PowerShell empty objects, inspect property counts using @($obj.PSObject.Properties).Count rather than relying on ambiguous property enumeration.
 - Read-only Messenger --check-auth verified the composer was available; this is **not** evidence that actual Enter submission or court reservation succeeded.
+- Security regexes need regression tests for false positives: embedded numeric substrings of immutable hexadecimal GitHub Action commit SHAs are not student identifiers. CI actions can use SHA pinning to avoid mutable release tags.

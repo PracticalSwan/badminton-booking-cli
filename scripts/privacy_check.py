@@ -14,7 +14,7 @@ BLOCKED = (
 )
 SUSPECT = (re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
            re.compile(r"(?i)(?:gho_|ghp_|github_pat_|sk-proj-)[A-Za-z0-9_-]{8,}"))
-IDENTIFIER = re.compile(r"(?<![0-9])[0-9]{7,16}(?![0-9])")
+IDENTIFIER = re.compile(r"(?<![0-9a-fA-F])[0-9]{7,16}(?![0-9a-fA-F])")
 
 
 def main() -> int:
