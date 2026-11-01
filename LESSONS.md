@@ -2,6 +2,14 @@
 
 Read at the start of every maintenance task. Add only evidence-backed findings.
 
+## 2026-11-01
+
+- Student IDs belong only in the ignored local private JSON, not in source, versioned schedules, logs, or the Git remote. Use masked CLI display and hidden double-entry when editing.
+- Tests against isolated temporary private files verified replace/add/remove, duplicate and nonnumeric rejection, confirmation mismatch, cancellation, and preservation of the recipient URL without changing Task Scheduler.
+- A prepared Messenger request must compare the private configuration again before Enter; mocked sender regression confirmed that an ID change prevents stale submission.
+- The user's schedule.json has pre-existing local changes, so feature commits must stage explicit paths and leave those unrelated choices untouched.
+- A read-only invocation through the actual Desktop CMD launcher confirmed that the Student ID sub-menu opens and masks current IDs without altering the pause state.
+
 ## 2026-10-15
 
 - The Desktop launcher previously ran task installation directly, bypassing pause/resume semantics. The new launcher must open the menu rather than implicitly enabling the task.

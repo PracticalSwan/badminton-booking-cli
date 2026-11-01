@@ -19,7 +19,7 @@ class SenderTests(unittest.TestCase):
         self.config = load_schedule(FIXTURE)
         self.now = datetime(2026, 10, 19, 8, 0, tzinfo=ZoneInfo("Asia/Bangkok"))
 
-    def invoke(self, *, paused=(False, False), sent=(False, False), schedules=None, now=None):
+    def invoke(self, *, paused=(False, False), sent=(False, False), schedules=None, privates=None, now=None):
         actual = now or self.now
 
         class FakeClock(datetime):
@@ -33,7 +33,7 @@ class SenderTests(unittest.TestCase):
             stack.enter_context(patch.object(booking, "is_paused", side_effect=paused))
             stack.enter_context(patch.object(booking, "sent_today", side_effect=sent))
             stack.enter_context(patch.object(booking, "load_schedule", side_effect=schedules or (self.config, self.config)))
-            stack.enter_context(patch.object(booking, "load_private", return_value=FAKE_PRIVATE))
+            stack.enter_context(patch.object(booking, "load_private", side_effect=privates or (FAKE_PRIVATE, FAKE_PRIVATE)))
             marker = stack.enter_context(patch.object(booking, "AUTH_MARKER"))
             marker.exists.return_value = True
             browser = stack.enter_context(patch.object(booking, "sync_playwright"))
@@ -84,6 +84,13 @@ class SenderTests(unittest.TestCase):
         changed = load_schedule(FIXTURE)
         changed["send_time"] = "08:05"
         code, composer, mark, _, _ = self.invoke(schedules=(self.config, changed))
+        self.assertEqual(code, 0)
+        composer.return_value.press.assert_not_called()
+        mark.assert_not_called()
+
+    def test_student_ids_changed_while_preparing_blocks_send(self):
+        changed = {**FAKE_PRIVATE, "student_ids": ["000001"]}
+        code, composer, mark, _, _ = self.invoke(privates=(FAKE_PRIVATE, changed))
         self.assertEqual(code, 0)
         composer.return_value.press.assert_not_called()
         mark.assert_not_called()

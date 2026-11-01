@@ -202,6 +202,9 @@ def run_booking() -> int:
             if load_schedule() != schedule:
                 log("Booking settings changed while preparing; stale message not sent.")
                 return 0
+            if load_private() != private:
+                log("Private booking settings changed while preparing; stale message not sent.")
+                return 0
             if datetime.now(TZ) > latest:
                 log("Send window expired while preparing; nothing sent.")
                 return 3

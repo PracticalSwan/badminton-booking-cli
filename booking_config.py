@@ -105,23 +105,56 @@ def format_time(value: str) -> str:
     return datetime.combine(date(2000, 1, 1), parse_clock(value)).strftime("%I:%M %p").lstrip("0")
 
 
-def load_private(path: Path = PRIVATE_PATH) -> dict:
-    try:
-        data = json.loads(path.read_text(encoding="utf-8-sig"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ConfigError("Private booking settings are missing or invalid. See README.md.") from exc
+def validate_private(data: object) -> dict:
+    """Validate local-only Messenger settings without echoing private values."""
     if not isinstance(data, dict) or set(data) != {"chat_url", "student_ids"}:
         raise ConfigError("Private settings require chat_url and student_ids.")
     url = data["chat_url"]
     if not isinstance(url, str):
         raise ConfigError("Private chat_url must be a Messenger conversation URL.")
     parsed = urlparse(url)
-    if parsed.scheme != "https" or parsed.hostname not in ("www.facebook.com", "facebook.com") or not re.fullmatch(r"/messages/t/\d+/?", parsed.path) or parsed.query or parsed.fragment or parsed.username or parsed.password:
+    if (
+        parsed.scheme != "https"
+        or parsed.hostname not in ("www.facebook.com", "facebook.com")
+        or not re.fullmatch(r"/messages/t/[0-9]+/?", parsed.path)
+        or parsed.query or parsed.fragment or parsed.username or parsed.password
+    ):
         raise ConfigError("Private chat_url must be a direct HTTPS Facebook Messenger conversation URL.")
     ids = data["student_ids"]
-    if not isinstance(ids, list) or not ids or any(not isinstance(x, str) or not x.isdigit() or len(x) > 16 for x in ids):
-        raise ConfigError("Private student_ids must be a nonempty list of numeric strings.")
-    return {"chat_url": url, "student_ids": ids}
+    if (
+        not isinstance(ids, list)
+        or not ids
+        or any(not isinstance(item, str) or not re.fullmatch(r"[0-9]{1,16}", item) for item in ids)
+        or len(set(ids)) != len(ids)
+    ):
+        raise ConfigError("Student IDs must be a nonempty list of unique numeric strings (up to 16 digits).")
+    return {"chat_url": url, "student_ids": list(ids)}
+
+
+def load_private(path: Path = PRIVATE_PATH) -> dict:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ConfigError("Private booking settings are missing or invalid. See README.md.") from exc
+    return validate_private(data)
+
+
+def save_private(data: dict, path: Path = PRIVATE_PATH) -> None:
+    """Atomically persist local identity settings, with no plaintext backup."""
+    clean = validate_private(data)
+    temp_name = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent,
+            prefix=".booking-private-", suffix=".tmp", delete=False,
+        ) as handle:
+            temp_name = handle.name
+            json.dump(clean, handle, indent=2)
+            handle.write("\n")
+        os.replace(temp_name, path)
+    finally:
+        if temp_name and os.path.exists(temp_name):
+            os.unlink(temp_name)
 
 
 def compose_message(slot: dict[str, str], private: dict) -> str:

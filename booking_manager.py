@@ -1,14 +1,15 @@
 """Text-only booking settings manager; no Messenger messages are sent here."""
 from __future__ import annotations
 
+import getpass
 import subprocess
 import sys
 from datetime import date
 from pathlib import Path
 
 from booking_config import (
-    DAYS, ROOT, ConfigError, format_time, load_schedule,
-    parse_clock, save_schedule, validate_schedule, validate_slot,
+    DAYS, ROOT, ConfigError, format_time, load_private, load_schedule,
+    parse_clock, save_private, save_schedule, validate_private, validate_schedule, validate_slot,
 )
 
 PAUSED = ROOT / "PAUSED"
@@ -95,6 +96,65 @@ def run_control(script_name: str) -> None:
                     "-File", str(script)], check=True, timeout=60)
 
 
+def ask_student_id() -> str:
+    """Read and confirm an ID without echoing it to the terminal."""
+    first = getpass.getpass("New Student ID (hidden): ")
+    second = getpass.getpass("Confirm Student ID (hidden): ")
+    if first != second:
+        raise ConfigError("Student ID confirmation did not match.")
+    # Delegate content validation to validate_private inside save_private.
+    return first
+
+
+def select_student_id(count: int) -> int:
+    selection = prompt(f"Student number (1-{count}): ")
+    if not selection.isdecimal() or not 1 <= int(selection) <= count:
+        raise ConfigError("Choose a valid Student ID list position.")
+    return int(selection) - 1
+
+
+def manage_student_ids() -> None:
+    """Local-only private ID editor; never print unmasked IDs or write logs."""
+    while True:
+        private = load_private()
+        ids = private["student_ids"]
+        print("\n=== Student IDs (local/private) ===")
+        for index, student_id in enumerate(ids, start=1):
+            print(f"  {index}. {'*' * len(student_id)}")
+        print("1. Replace an existing Student ID")
+        print("2. Add a Student ID")
+        print("3. Remove a Student ID")
+        print("0. Back to main menu")
+        action = prompt("Select option: ")
+        if action == "0":
+            return
+        try:
+            updated = list(ids)
+            if action == "1":
+                position = select_student_id(len(ids))
+                updated[position] = ask_student_id()
+                if updated == ids:
+                    print("No change.")
+                    continue
+            elif action == "2":
+                updated.append(ask_student_id())
+            elif action == "3":
+                if len(ids) == 1:
+                    raise ConfigError("At least one Student ID is required.")
+                position = select_student_id(len(ids))
+                if prompt("Type REMOVE to confirm deletion: ") != "REMOVE":
+                    print("Cancelled.")
+                    continue
+                del updated[position]
+            else:
+                print("Unknown menu choice.")
+                continue
+            save_private(validate_private({"chat_url": private["chat_url"], "student_ids": updated}))
+            print("Student IDs updated in local private settings; scheduler state unchanged.")
+        except (ConfigError, OSError) as exc:
+            print(f"ERROR: {exc}")
+
+
 def main() -> int:
     try:
         while True:
@@ -107,6 +167,7 @@ def main() -> int:
             print("5. Change daily message send time")
             print("6. ENABLE automatic booking")
             print("7. DISABLE automatic booking indefinitely")
+            print("8. Manage Student IDs (private)")
             print("0. Exit")
             choice = prompt("Select option: ")
             try:
@@ -145,6 +206,8 @@ def main() -> int:
                         print("Cancelled.")
                 elif choice == "7":
                     run_control("stop_booking.ps1")
+                elif choice == "8":
+                    manage_student_ids()
                 else:
                     print("Unknown menu choice.")
             except (ConfigError, RuntimeError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:

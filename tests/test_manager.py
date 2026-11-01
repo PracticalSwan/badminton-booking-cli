@@ -26,6 +26,46 @@ class CliTests(unittest.TestCase):
             config = sync.call_args.args[0]
             self.assertEqual(config["weekly"]["monday"], {"start": "17:00", "end": "18:00"})
 
+    def test_student_id_edit_through_menu_without_scheduler_sync(self):
+        private = {"chat_url": "https://www.facebook.com/messages/t/0000000",
+                   "student_ids": ["000000", "000001"]}
+        with patch("booking_manager.prompt",
+                   side_effect=["8", "1", "1", "0", "0"]), \
+             patch("booking_manager.getpass.getpass",
+                   side_effect=["000002", "000002"]), \
+             patch("booking_manager.load_private", return_value=private), \
+             patch("booking_manager.save_private") as save, \
+             patch("booking_manager.save_and_sync") as sync, \
+             patch("booking_manager.load_schedule", return_value=load_schedule()):
+            self.assertEqual(main(), 0)
+            save.assert_called_once()
+            self.assertEqual(save.call_args.args[0]["student_ids"],
+                             ["000002", "000001"])
+            sync.assert_not_called()
+
+    def test_student_id_remove_last_is_blocked(self):
+        private = {"chat_url": "https://www.facebook.com/messages/t/0000000",
+                   "student_ids": ["000000"]}
+        with patch("booking_manager.prompt",
+                   side_effect=["8", "3", "0", "0"]), \
+             patch("booking_manager.load_private", return_value=private), \
+             patch("booking_manager.save_private") as save, \
+             patch("booking_manager.load_schedule", return_value=load_schedule()):
+            self.assertEqual(main(), 0)
+            save.assert_not_called()
+
+    def test_student_id_add_rejects_duplicate(self):
+        private = {"chat_url": "https://www.facebook.com/messages/t/0000000",
+                   "student_ids": ["000000"]}
+        with patch("booking_manager.prompt", side_effect=["8", "2", "0", "0"]), \
+             patch("booking_manager.getpass.getpass",
+                   side_effect=["000000", "000000"]), \
+             patch("booking_manager.load_private", return_value=private), \
+             patch("booking_manager.save_private") as save, \
+             patch("booking_manager.load_schedule", return_value=load_schedule()):
+            self.assertEqual(main(), 0)
+            save.assert_not_called()
+
     def test_disable_calls_pause_script(self):
         with patch("booking_manager.prompt", side_effect=["7", "0"]), \
              patch("booking_manager.load_schedule", return_value=load_schedule()), \

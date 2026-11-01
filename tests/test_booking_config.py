@@ -83,6 +83,41 @@ class ScheduleTests(unittest.TestCase):
             with self.assertRaises(ConfigError):
                 load_private(path)
 
+    def test_private_ids_are_unique_numeric_and_nonempty(self):
+        from booking_config import validate_private
+        baseline = {"chat_url": "https://www.facebook.com/messages/t/0000000",
+                    "student_ids": ["000000", "000001"]}
+        self.assertEqual(validate_private(baseline), baseline)
+        for ids in ([], ["000000", "000000"], ["not-numeric"],
+                    ["000000", " "], ["000000", 123], "000000"):
+            with self.subTest(ids=ids), self.assertRaises(ConfigError):
+                validate_private({**baseline, "student_ids": ids})
+
+    def test_private_settings_saved_atomically_and_without_schedule_change(self):
+        from booking_config import save_private
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "booking.private.json"
+            original = {"chat_url": "https://www.facebook.com/messages/t/0000000",
+                        "student_ids": ["000000", "000001"]}
+            save_private(original, path)
+            updated = {**original, "student_ids": ["000002", "000001"]}
+            save_private(updated, path)
+            self.assertEqual(load_private(path), updated)
+            self.assertFalse(list(Path(tmp).glob(".booking-private-*")))
+            before = path.read_bytes()
+            with self.assertRaises(ConfigError):
+                save_private({**original, "student_ids": []}, path)
+            self.assertEqual(path.read_bytes(), before)
+
+    def test_private_settings_keep_recipient_without_ids_in_error(self):
+        from booking_config import save_private
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "booking.private.json"
+            original = {"chat_url": "https://www.facebook.com/messages/t/0000000",
+                        "student_ids": ["000000"]}
+            save_private(original, path)
+            self.assertEqual(load_private(path)["chat_url"], original["chat_url"])
+
     def test_format_time(self):
         self.assertEqual(format_time("16:30"), "4:30 PM")
         self.assertEqual(format_time("08:00"), "8:00 AM")

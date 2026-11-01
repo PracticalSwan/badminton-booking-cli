@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-01 — Local Student ID management
+
+- Added CLI option 8 to replace, add, and remove Student IDs using hidden double-entry and masked listings.
+- Added validated, atomic writes to local Git-ignored private settings, preserving the Messenger conversation URL, other IDs, schedule, and pause status.
+- Sender rechecks private settings just before message submission to avoid stale student lists.
+- Added isolated private-file and CLI tests for valid edits, duplicate/invalid IDs, cancellation, minimum one ID, privacy masking, and stale-data send guard.
+- Preserved pre-existing user edits to schedule.json without staging them.
+
 ## 2026-10-15 — Verification and safety maintenance
 
 - Reproduced and fixed corrupted booking-history fail-open, preventing duplicate sends when state.json cannot be parsed.
