@@ -1,7 +1,6 @@
 """Text-only booking settings manager; no Messenger messages are sent here."""
 from __future__ import annotations
 
-import getpass
 import subprocess
 import sys
 from datetime import date
@@ -97,9 +96,9 @@ def run_control(script_name: str) -> None:
 
 
 def ask_student_id() -> str:
-    """Read and confirm an ID without echoing it to the terminal."""
-    first = getpass.getpass("New Student ID (hidden): ")
-    second = getpass.getpass("Confirm Student ID (hidden): ")
+    """Read and confirm an ID visibly in the user's local console."""
+    first = prompt("New Student ID: ")
+    second = prompt("Confirm Student ID: ")
     if first != second:
         raise ConfigError("Student ID confirmation did not match.")
     # Delegate content validation to validate_private inside save_private.
@@ -114,13 +113,13 @@ def select_student_id(count: int) -> int:
 
 
 def manage_student_ids() -> None:
-    """Local-only private ID editor; never print unmasked IDs or write logs."""
+    """Display and edit full IDs locally; never write their values to application logs."""
     while True:
         private = load_private()
         ids = private["student_ids"]
-        print("\n=== Student IDs (local/private) ===")
+        print("\n=== Student IDs ===")
         for index, student_id in enumerate(ids, start=1):
-            print(f"  {index}. {'*' * len(student_id)}")
+            print(f"  {index}. {student_id}")
         print("1. Replace an existing Student ID")
         print("2. Add a Student ID")
         print("3. Remove a Student ID")
@@ -167,7 +166,7 @@ def main() -> int:
             print("5. Change daily message send time")
             print("6. ENABLE automatic booking")
             print("7. DISABLE automatic booking indefinitely")
-            print("8. Manage Student IDs (private)")
+            print("8. Manage Student IDs")
             print("0. Exit")
             choice = prompt("Select option: ")
             try:

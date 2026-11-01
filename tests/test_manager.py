@@ -30,9 +30,7 @@ class CliTests(unittest.TestCase):
         private = {"chat_url": "https://www.facebook.com/messages/t/0000000",
                    "student_ids": ["000000", "000001"]}
         with patch("booking_manager.prompt",
-                   side_effect=["8", "1", "1", "0", "0"]), \
-             patch("booking_manager.getpass.getpass",
-                   side_effect=["000002", "000002"]), \
+                   side_effect=["8", "1", "1", "000002", "000002", "0", "0"]), \
              patch("booking_manager.load_private", return_value=private), \
              patch("booking_manager.save_private") as save, \
              patch("booking_manager.save_and_sync") as sync, \
@@ -57,9 +55,7 @@ class CliTests(unittest.TestCase):
     def test_student_id_add_rejects_duplicate(self):
         private = {"chat_url": "https://www.facebook.com/messages/t/0000000",
                    "student_ids": ["000000"]}
-        with patch("booking_manager.prompt", side_effect=["8", "2", "0", "0"]), \
-             patch("booking_manager.getpass.getpass",
-                   side_effect=["000000", "000000"]), \
+        with patch("booking_manager.prompt", side_effect=["8", "2", "000000", "000000", "0", "0"]), \
              patch("booking_manager.load_private", return_value=private), \
              patch("booking_manager.save_private") as save, \
              patch("booking_manager.load_schedule", return_value=load_schedule()):

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-01 — Visible Student ID editing correction
+
+- Updated Student ID menu to display full current IDs with their list positions, rather than asterisks.
+- Replaced hidden password-style input with visible double-entry, preserving validation, local-only storage, and all automation safety controls.
+- Updated regression tests and CLI instructions. No Student ID values are committed.
+
 ## 2026-11-01 — Local Student ID management
 
 - Added CLI option 8 to replace, add, and remove Student IDs using hidden double-entry and masked listings.

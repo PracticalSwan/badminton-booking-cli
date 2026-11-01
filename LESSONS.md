@@ -4,6 +4,9 @@ Read at the start of every maintenance task. Add only evidence-backed findings.
 
 ## 2026-11-01
 
+- Follow-up usability correction: the user must see the full existing Student IDs to select the right ID for editing. Showing them in the local interactive CLI is intentional; this does **not** authorize copying them into source, GitHub, logs, or remote diagnostic output. The previous masking recommendation is superseded for the local CLI.
+- Ordinary `input()` makes typed IDs visible during replacement, unlike `getpass()`; retain confirmation and all existing validation and local-only persistence.
+
 - Student IDs belong only in the ignored local private JSON, not in source, versioned schedules, logs, or the Git remote. Use masked CLI display and hidden double-entry when editing.
 - Tests against isolated temporary private files verified replace/add/remove, duplicate and nonnumeric rejection, confirmation mismatch, cancellation, and preservation of the recipient URL without changing Task Scheduler.
 - A prepared Messenger request must compare the private configuration again before Enter; mocked sender regression confirmed that an ID change prevents stale submission.

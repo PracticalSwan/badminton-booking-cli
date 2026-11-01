@@ -15,7 +15,7 @@ Double-click **Enable Badminton Booking.cmd** on the Desktop. Its new purpose is
 | 5 | Edit the daily Messenger send time |
 | 6 | ENABLE automatic sending after explicit YES confirmation |
 | 7 | DISABLE automatic sending indefinitely |
-| 8 | Manage Student IDs in local private settings |
+| 8 | View and change Student IDs |
 | 0 | Exit without altering enabled/disabled state |
 
 **Default:** Send request at 08:00 Asia/Bangkok. Monday-Friday court slot 16:30-18:00, Sunday 15:30-17:00; Saturday skipped. Times use 24-hour HH:MM. Specific-date exceptions take precedence over weekly settings.
@@ -29,11 +29,11 @@ The Task Scheduler task is named **Badminton Court Booking**. It launches one mi
 
 ### Change Student IDs from the CLI
 
-Open the Desktop launcher and choose **8. Manage Student IDs**. The sub-menu lets you **replace a selected ID**, **add a new ID**, or **remove an ID** (with confirmation). IDs appear masked as asterisks in their existing order; choose by position. New IDs are entered twice using hidden keyboard input (nothing appears while you type). Only unique numeric IDs are accepted; at least one ID must remain.
+Open the Desktop launcher and choose **8. Manage Student IDs**. The sub-menu lets you **replace a selected ID**, **add a new ID**, or **remove an ID** (with confirmation). The full existing IDs are displayed beside their positions so you can identify which one to edit. New IDs are typed visibly and entered twice for confirmation. Only unique numeric IDs are accepted; at least one ID must remain.
 
 Changes are saved atomically to the local ignored booking.private.json, retaining the Messenger recipient and the order of other IDs. The main schedule, Task Scheduler enable/disable status, and PAUSED marker are not changed. The sender rechecks the private file immediately before sending, and cancels a prepared message if any private setting changed. Editing IDs after a message has already been sent **does not resend** that day's booking.
 
-**Do not include actual IDs in Git commits, screenshots, logs, or GitHub issues.**
+Student IDs are visible inside your local CLI as requested. Avoid sharing screenshots or recordings of that screen; the actual IDs remain excluded from Git commits, logs, and GitHub issues.
 - Example private file with dummy IDs: booking.private.example.json
 - Local-only session browser profiles: chrome_profile and browser_profile
 - Local-only pause marker and sent history: PAUSED and state.json

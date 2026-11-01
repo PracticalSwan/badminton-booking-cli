@@ -20,11 +20,11 @@
 
 ## Protected and forbidden data
 
-Never commit, publish or print browser profiles, cookies, sessions, booking.private.json, auth.ok, PAUSED, state.json, logs, credentials, real student IDs or real recipient URL. Within the local CLI, show only masked student IDs and use hidden double-entry for new IDs; never log private values. Even though GitHub is PRIVATE, source must be sanitized. Inspect .gitignore, use explicit Git staging and run scripts/privacy_check.py on tracked/staged files before every push. No Codex CLI; use the user-selected CodexPro connector.
+Never commit, upload, or expose browser profiles, cookies, sessions, booking.private.json, auth.ok, PAUSED, state.json, logs, credentials, real student IDs or real recipient URL. **Exception for local usability:** the interactive CLI displays complete student IDs and accepts visible double-entry as expressly requested. Do not echo IDs through remote diagnostic tool output, log them, or put them in Git. Even though GitHub is PRIVATE, source must be sanitized. Inspect .gitignore, use explicit Git staging and run scripts/privacy_check.py on tracked/staged files before every push. No Codex CLI; use the user-selected CodexPro connector.
 
 ## Verification and publication
 
-- Parse and test Python and PowerShell; test valid/invalid times, date overrides, skipped dates, CLI edits, masked Student ID replace/add/remove/cancel, private-file atomicity/validation, and explicit enable guard. Test private files in isolated temporary directories only.
+- Parse and test Python and PowerShell; test valid/invalid times, date overrides, skipped dates, CLI edits, visible Student ID replace/add/remove/cancel, private-file atomicity/validation, and explicit enable guard. Test private files in isolated temporary directories only.
 - Verify Desktop launcher and preserved task state. Do not send actual Facebook messages in automated tests. Live UI/send behavior is not proven by local tests.
 - Inspect intended changes and staging, privacy audit, then commit/push when authorized (this maintenance pass includes authorization). The privacy audit must inspect **staged Git blobs**, not just working-tree files, and reject real-looking numeric identifiers even when no private config exists (such as on CI).
 - Verify the remote is PRIVATE and the remote HEAD matches. No force-push or history rewriting.

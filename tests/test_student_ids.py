@@ -24,11 +24,18 @@ class PrivateManagerTests(unittest.TestCase):
             self.path,
         )
 
-    def run_menu(self, selections, secrets=()):
+    def run_menu(self, selections, new_ids=()):
         output = io.StringIO()
+        choices = iter(selections)
+        values = iter(new_ids)
+
+        def answer(question):
+            if question.startswith(("New Student ID", "Confirm Student ID")):
+                return next(values)
+            return next(choices)
+
         with (
-            patch("booking_manager.prompt", side_effect=selections),
-            patch("booking_manager.getpass.getpass", side_effect=secrets),
+            patch("booking_manager.prompt", side_effect=answer),
             patch("booking_manager.load_schedule", return_value=load_schedule(FIXTURE)),
             patch("booking_manager.load_private", side_effect=lambda: load_private(self.path)),
             patch("booking_manager.save_private", side_effect=lambda x: save_private(x, self.path)),
@@ -41,14 +48,23 @@ class PrivateManagerTests(unittest.TestCase):
             controls.assert_not_called()
         return output.getvalue()
 
+    def test_new_student_id_input_is_visible(self):
+        with patch("booking_manager.prompt", side_effect=["000003", "000003"]) as answer:
+            self.assertEqual(booking_manager.ask_student_id(), "000003")
+        self.assertEqual(
+            [call.args[0] for call in answer.call_args_list],
+            ["New Student ID: ", "Confirm Student ID: "],
+        )
+
     def test_replace_one_id_keeps_others_and_recipient(self):
         output = self.run_menu(["8", "1", "2", "0", "0"], ["000003", "000003"])
         updated = load_private(self.path)
         self.assertEqual(updated["student_ids"], ["000001", "000003"])
         self.assertEqual(updated["chat_url"], SAMPLE_URL)
-        self.assertNotIn("000001", output)
-        self.assertNotIn("000003", output)
-        self.assertIn("******", output)
+        self.assertIn("1. 000001", output)
+        self.assertIn("2. 000002", output)
+        self.assertIn("2. 000003", output)
+        self.assertNotIn("******", output)
 
     def test_add_id_preserves_order(self):
         self.run_menu(["8", "2", "0", "0"], ["000003", "000003"])
@@ -57,7 +73,8 @@ class PrivateManagerTests(unittest.TestCase):
     def test_remove_id_requires_confirmation(self):
         output = self.run_menu(["8", "3", "1", "REMOVE", "0", "0"])
         self.assertEqual(load_private(self.path)["student_ids"], ["000002"])
-        self.assertNotIn("000002", output)
+        self.assertIn("2. 000002", output)
+        self.assertNotIn("******", output)
 
     def test_cancel_remove_has_no_effect(self):
         before = self.path.read_bytes()
