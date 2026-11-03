@@ -17,7 +17,7 @@
 - Scheduler starts one minute before send; five-minute send cutoff, Asia/Bangkok timezone, duplicate-date prevention.
 - Sender checks PAUSED at startup and immediately before Enter; abort if schedule **or private Student IDs** change while preparing. Invalid or unreadable booking history **must block sending** to avoid an accidental duplicate.
 - Editing settings must not unpause. stop_booking.ps1 creates PAUSED and disables; start_booking.ps1 explicitly enables and removes PAUSED. sync_schedule.ps1 updates the trigger while preserving disabled state.
-- New installs use scripts/initialize_booking.ps1 to create ignored, synthetic private settings and PAUSED without affecting the scheduler. Once booking.private.json exists, initialization must not change it or the current pause state. enable_booking.ps1 always registers paused; start_booking.ps1 requires auth.ok and a successful --validate-config before enabling. booking.py rejects the untouched synthetic example when authenticating or preparing a send.
+- New installs use scripts/initialize_booking.ps1 to create ignored, synthetic private settings and PAUSED without affecting the scheduler. Once booking.private.json exists, initialization must not change it or the current pause state. enable_booking.ps1 always registers paused; start_booking.ps1 requires auth.ok, successful --validate-config, and a fresh non-sending --check-auth before enabling. booking.py rejects the untouched synthetic example when authenticating or preparing a send.
 
 ## Protected and forbidden data
 
@@ -26,7 +26,7 @@ Never commit, upload, or expose browser profiles, cookies, sessions, booking.pri
 ## Verification and publication
 
 - Parse and test Python and PowerShell; test valid/invalid times, date overrides, skipped dates, CLI edits, visible Student ID replace/add/remove/cancel, private-file atomicity/validation, and explicit enable guard. Test private files in isolated temporary directories only.
-- Verify Desktop launcher and preserved task state. Do not send actual Facebook messages in automated tests. Live UI/send behavior is not proven by local tests. The live task may be Ready with no PAUSED: check fresh state and never change it just for an onboarding test. Test initialization in an isolated temporary directory.
+- Verify Desktop launcher and preserved task state. Do not send actual Facebook messages in automated tests. Live UI/send behavior is not proven by local tests. The live task may be Ready with no PAUSED: check fresh state and never change it just for an onboarding test. Test initialization, mocked registration, and activation failure paths in isolated temporary directories.
 - Inspect intended changes and staging, privacy audit, then commit/push when authorized (this maintenance pass includes authorization). The privacy audit must inspect **staged Git blobs**, not just working-tree files, and reject real-looking numeric identifiers even when no private config exists (such as on CI).
 - Verify the remote is PRIVATE and the remote HEAD matches. No force-push or history rewriting.
 - Report concrete verification limits and unfinished work. Do not claim remote success unless verified.

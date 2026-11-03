@@ -22,6 +22,9 @@ if (!(Test-Path -LiteralPath $AuthMarker)) {
 if (!(Test-Path -LiteralPath $Python)) { throw 'Python .venv is missing. Complete README setup first.' }
 & $Python $Booking --validate-config
 if ($LASTEXITCODE -ne 0) { throw 'Local booking settings are invalid. Task remains paused.' }
+# A saved auth.ok marker may outlive a Facebook session: verify access before activating.
+& $Python $Booking --check-auth
+if ($LASTEXITCODE -ne 0) { throw 'Messenger session verification failed. Run booking.py --login; task not enabled.' }
 & (Join-Path $Root 'sync_schedule.ps1')
 Enable-ScheduledTask -TaskName $TaskName -ErrorAction Stop | Out-Null
 $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop

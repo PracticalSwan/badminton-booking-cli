@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-03 — Follow-up activation safety and clean-clone verification
+
+- Rechecked the published repository via a clean Windows clone, fresh virtual environment, pinned dependencies, and non-sending synthetic configuration workflow.
+- Require a fresh non-sending Messenger authentication check before explicitly enabling the Windows task; a stale auth.ok marker alone is insufficient.
+- Added Windows PowerShell integration tests that mock Task Scheduler to verify registration remains paused and failed authentication cannot enable a task; tested the successful explicit enable path with synthetic inputs.
+
 ## 2026-11-03 — Safe first-time onboarding for other authorized users
 
 - Expanded the GitHub README with Windows prerequisites, venv installation, private local configuration, Messenger login and non-sending authentication checks, schedule/Student ID editing, paused task registration, and troubleshooting.

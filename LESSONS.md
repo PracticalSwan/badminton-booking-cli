@@ -9,6 +9,8 @@ Read at the start of every maintenance task. Add only evidence-backed findings.
 - A structurally valid numeric-only synthetic private example simplifies setup, but it must be rejected as operational configuration until both the URL and IDs are replaced. A separate --validate-config command is non-sending and safe for onboarding.
 - Playwright's channel="chrome" uses installed Google Chrome; a separate Playwright Chromium browser download is unnecessary. Unit tests do not establish a live Facebook delivery or reservation.
 - Initializer must leave any existing booking.private.json and pause state untouched; it is tested with a temporary directory and no Task Scheduler changes.
+- `auth.ok` only proves a previous Messenger login; it does not establish that the current Facebook session is usable. A fresh, non-sending `--check-auth` before enabling prevents a stale marker from activating an unusable task. Isolated Windows PowerShell tests mock task cmdlets to verify both the rejected-auth and successful-enable paths, and that newly registered tasks are disabled with PAUSED present.
+- An actual clean private GitHub clone created a new Windows Python 3.10 venv, installed pinned dependencies, initialized PAUSED, rejected synthetic placeholders and validated safely replaced synthetic values. Live `--check-auth` independently found a Messenger composer without sending a message; actual message delivery remains untested.
 
 ## 2026-11-01
 

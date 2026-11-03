@@ -142,7 +142,7 @@ Expected after first installation: task **Disabled**, and `Test-Path` returns **
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\start_booking.ps1
 ~~~
 
-The enable script requires the local login marker, runs the non-sending configuration validator, synchronizes the trigger, enables the Windows task and removes `PAUSED` only after successful enabling. It does **not** immediately send a booking message; the scheduled run handles the configured time.
+The enable script requires the local login marker, validates your configuration, and runs a fresh, **non-sending** Messenger `--check-auth` (which briefly opens Chrome) before synchronizing the trigger. It enables the Windows task and removes `PAUSED` only after successful verification. An expired or inaccessible Facebook session **blocks activation**; run `--login` again, then retry. It does **not** immediately send a booking message; the scheduled run handles the configured time.
 
 To stop bookings **indefinitely**, choose **7** in the CLI or run:
 
@@ -163,7 +163,7 @@ The sender also enforces one successful submission attempt per date, a **five-mi
 | Playwright cannot launch `channel="chrome"` | Install or repair **Google Chrome Stable** on Windows; the project does not use the downloaded Playwright Chromium channel |
 | `--validate-config` fails | Check JSON syntax, the HTTPS numeric Facebook conversation path, unique quoted numeric Student IDs, and replacement of **both** synthetic example values |
 | `--login` or `--check-auth` cannot find a composer | Log in again with `--login`, confirm that **your** Messenger conversation loads, close other automation Chrome instances, and check whether Facebook's page or login flow has changed |
-| Task is missing or Disabled | First register with `enable_booking.ps1`. Enabling then requires an explicit CLI `YES` or `start_booking.ps1`; a Disabled task with `PAUSED` is intentional |
+| Task is missing or Disabled | First register with `enable_booking.ps1`. Enabling requires an explicit CLI `YES` or `start_booking.ps1`, valid private settings, and a currently working Messenger session; a Disabled task with `PAUSED` is intentional |
 | Task starts at the wrong clock time | Check Windows `Get-TimeZone`, schedule `send_time`, and the scheduled trigger (one minute earlier). Windows local time must match Bangkok for the documented behavior |
 | Task cannot register or is denied access | Run PowerShell under the intended interactive Windows account; inspect Windows Task Scheduler permissions and avoid accidentally switching to another account |
 | Task is Ready but no booking was sent | Inspect **local-only** `booking.log`/`task_console.log`, login state, current date skip/override, five-minute cutoff, and sleep/network interruptions. `Ready` alone does not confirm successful sending |
