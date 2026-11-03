@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-03 — Safe first-time onboarding for other authorized users
+
+- Expanded the GitHub README with Windows prerequisites, venv installation, private local configuration, Messenger login and non-sending authentication checks, schedule/Student ID editing, paused task registration, and troubleshooting.
+- Added idempotent, non-sending scripts/initialize_booking.ps1; it creates a local-only sample and PAUSED on new installations without modifying existing private configurations.
+- Made example Student IDs syntactically valid yet intentionally synthetic, and introduced --validate-config and operational placeholder rejection.
+- Changed task registration to create PAUSED before registration and verify Disabled state; explicit enabling also validates local settings and requires an authentication marker.
+- Added isolated first-run regression checks and Windows CI PowerShell syntax coverage. The existing local task and custom schedule were not altered.
+
 ## 2026-11-01 — Visible Student ID editing correction
 
 - Updated Student ID menu to display full current IDs with their list positions, rather than asterisks.

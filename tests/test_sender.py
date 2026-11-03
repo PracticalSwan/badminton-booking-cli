@@ -11,7 +11,7 @@ from booking_config import load_schedule
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "schedule.default.json"
-FAKE_PRIVATE = {"chat_url": "https://www.facebook.com/messages/t/0000000", "student_ids": ["0000000"]}
+FAKE_PRIVATE = {"chat_url": "https://www.facebook.com/messages/t/00000000", "student_ids": ["0000000"]}
 
 
 class SenderTests(unittest.TestCase):
@@ -44,6 +44,15 @@ class SenderTests(unittest.TestCase):
             mark = stack.enter_context(patch.object(booking, "mark_sent"))
             code = booking.run_booking()
             return code, composer, mark, browser, context
+
+    def test_untouched_example_blocks_send_before_browser(self):
+        example = {"chat_url": "https://www.facebook.com/messages/t/0000000",
+                   "student_ids": ["000000"]}
+        code, composer, mark, browser, _ = self.invoke(privates=(example,))
+        self.assertEqual(code, 5)
+        browser.assert_not_called()
+        composer.return_value.press.assert_not_called()
+        mark.assert_not_called()
 
     def test_nominal_composes_once_and_marks_sent(self):
         code, composer, mark, browser, context = self.invoke()

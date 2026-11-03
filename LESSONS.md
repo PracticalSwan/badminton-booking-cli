@@ -2,16 +2,24 @@
 
 Read at the start of every maintenance task. Add only evidence-backed findings.
 
+## 2026-11-03
+
+- Live state can change between handoffs. Never assume the Windows task or PAUSED marker still matches an old report, and never alter an existing task to test first-run setup; use an isolated directory and read-only inspection.
+- Registering a new task without first creating PAUSED could enable sending by default. The installer must write PAUSED before registration and verify that the task remains Disabled; explicit start is the only activation path.
+- A structurally valid numeric-only synthetic private example simplifies setup, but it must be rejected as operational configuration until both the URL and IDs are replaced. A separate --validate-config command is non-sending and safe for onboarding.
+- Playwright's channel="chrome" uses installed Google Chrome; a separate Playwright Chromium browser download is unnecessary. Unit tests do not establish a live Facebook delivery or reservation.
+- Initializer must leave any existing booking.private.json and pause state untouched; it is tested with a temporary directory and no Task Scheduler changes.
+
 ## 2026-11-01
 
 - Follow-up usability correction: the user must see the full existing Student IDs to select the right ID for editing. Showing them in the local interactive CLI is intentional; this does **not** authorize copying them into source, GitHub, logs, or remote diagnostic output. The previous masking recommendation is superseded for the local CLI.
 - Ordinary `input()` makes typed IDs visible during replacement, unlike `getpass()`; retain confirmation and all existing validation and local-only persistence.
 
-- Student IDs belong only in the ignored local private JSON, not in source, versioned schedules, logs, or the Git remote. Use masked CLI display and hidden double-entry when editing.
+- Historical note (superseded 2026-11-01): Student IDs belong only in ignored local private JSON, not in source, versioned schedules, logs, or the Git remote. Current CLI deliberately uses full-ID display and visible double-entry.
 - Tests against isolated temporary private files verified replace/add/remove, duplicate and nonnumeric rejection, confirmation mismatch, cancellation, and preservation of the recipient URL without changing Task Scheduler.
 - A prepared Messenger request must compare the private configuration again before Enter; mocked sender regression confirmed that an ID change prevents stale submission.
 - The user's schedule.json has pre-existing local changes, so feature commits must stage explicit paths and leave those unrelated choices untouched.
-- A read-only invocation through the actual Desktop CMD launcher confirmed that the Student ID sub-menu opens and masks current IDs without altering the pause state.
+- Historical note (superseded 2026-11-01): an older read-only Desktop check used masking; the current CLI instead displays full IDs locally without changing scheduler state.
 
 ## 2026-10-15
 

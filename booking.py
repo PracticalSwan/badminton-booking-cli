@@ -33,6 +33,15 @@ def log(message: str) -> None:
         handle.write(line + "\n")
 
 
+def load_operational_private() -> dict:
+    """Reject untouched synthetic onboarding values before any browser/send work."""
+    private = load_private()
+    if (private["chat_url"].rstrip("/") == "https://www.facebook.com/messages/t/0000000"
+            or "000000" in private["student_ids"]):
+        raise ConfigError("Replace the example Messenger URL and Student IDs in booking.private.json first.")
+    return private
+
+
 def load_state() -> dict:
     if not STATE_FILE.exists():
         return {}
@@ -99,7 +108,7 @@ def get_page(context):
 
 
 def authenticate() -> int:
-    private = load_private()
+    private = load_operational_private()
     print("Log in manually in the Facebook browser window. Do not enter credentials in this console.")
     print("After the intended booking conversation is visible, return here and press ENTER.")
     with sync_playwright() as playwright:
@@ -122,7 +131,7 @@ def authenticate() -> int:
 
 
 def check_auth() -> int:
-    private = load_private()
+    private = load_operational_private()
     with sync_playwright() as playwright:
         context = open_context(playwright)
         try:
@@ -165,7 +174,7 @@ def run_booking() -> int:
         if not AUTH_MARKER.exists():
             log("Facebook authentication has not been initialized. Run authentication first.")
             return 2
-        private = load_private()
+        private = load_operational_private()
     except ConfigError as exc:
         log(f"Booking configuration invalid: {exc}")
         return 5
@@ -202,7 +211,7 @@ def run_booking() -> int:
             if load_schedule() != schedule:
                 log("Booking settings changed while preparing; stale message not sent.")
                 return 0
-            if load_private() != private:
+            if load_operational_private() != private:
                 log("Private booking settings changed while preparing; stale message not sent.")
                 return 0
             if datetime.now(TZ) > latest:
@@ -225,6 +234,14 @@ def run_booking() -> int:
             context.close()
 
 
+def validate_installation() -> int:
+    """Verify local schedule and personal settings without opening Facebook."""
+    load_schedule()
+    load_operational_private()
+    print("PASS: Schedule and private configuration are valid and no example values remain.")
+    return 0
+
+
 def self_test() -> int:
     # Validate the user's CURRENT settings; customization is expected.
     schedule = load_schedule()
@@ -242,6 +259,7 @@ def main() -> int:
     parser.add_argument("--login", action="store_true", help="Open Facebook for manual login")
     parser.add_argument("--check-auth", action="store_true", help="Verify saved Facebook session")
     parser.add_argument("--self-test", action="store_true", help="Validate current weekly schedule (no Facebook)")
+    parser.add_argument("--validate-config", action="store_true", help="Validate schedule and own private settings, without Facebook")
     args = parser.parse_args()
     try:
         if args.login:
@@ -250,6 +268,8 @@ def main() -> int:
             return check_auth()
         if args.self_test:
             return self_test()
+        if args.validate_config:
+            return validate_installation()
         return run_booking()
     except ConfigError as exc:
         print(f"Configuration error: {exc}", file=sys.stderr)

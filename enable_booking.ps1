@@ -33,10 +33,13 @@ $Trigger = New-ScheduledTaskTrigger -Daily -At $launch
 $Settings = New-ScheduledTaskSettingsSet -WakeToRun -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 15) -MultipleInstances IgnoreNew
 $Principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
 $Task = New-ScheduledTask -Action $Action -Trigger $Trigger -Settings $Settings -Principal $Principal -Description 'Uses local schedule.json to send badminton requests; manages weekly and date overrides.'
-Register-ScheduledTask -TaskName $TaskName -InputObject $Task -Force | Out-Null
-if (Test-Path -LiteralPath $PauseFile) {
-    Disable-ScheduledTask -TaskName $TaskName -ErrorAction Stop | Out-Null
-    Write-Host 'Task registered but PAUSED marker exists; it remains disabled.'
-} else {
-    Write-Host "Task enabled. Daily launch: $($launch.ToString('HH:mm')); send time: $sendTime (Asia/Bangkok)."
+# Always register in the paused state. Only start_booking.ps1 may activate sending.
+# Write PAUSED before registration so even an immediately triggered task cannot send.
+if (!(Test-Path -LiteralPath $PauseFile)) {
+    Set-Content -LiteralPath $PauseFile -Value 'Paused during task installation. Enable only through start_booking.ps1.' -Encoding UTF8
 }
+Register-ScheduledTask -TaskName $TaskName -InputObject $Task -Force | Out-Null
+Disable-ScheduledTask -TaskName $TaskName -ErrorAction Stop | Out-Null
+$registered = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
+if ($registered.State -ne 'Disabled') { throw 'Installed task did not remain disabled; PAUSED marker preserved.' }
+Write-Host "Task registered PAUSED. Daily launch: $($launch.ToString('HH:mm')); send time: $sendTime (Asia/Bangkok)."

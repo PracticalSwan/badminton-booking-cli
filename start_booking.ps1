@@ -7,12 +7,21 @@ $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $TaskName = 'Badminton Court Booking'
 $PauseFile = Join-Path $Root 'PAUSED'
 $EnableScript = Join-Path $Root 'enable_booking.ps1'
+$AuthMarker = Join-Path $Root 'auth.ok'
+$Python = Join-Path $Root '.venv\Scripts\python.exe'
+$Booking = Join-Path $Root 'booking.py'
 
 $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
 if ($null -eq $task) {
     if (!(Test-Path -LiteralPath $EnableScript)) { throw "Missing: $EnableScript" }
     if ($SkipAuth) { & $EnableScript -SkipAuth } else { & $EnableScript }
 }
+if (!(Test-Path -LiteralPath $AuthMarker)) {
+    throw 'Facebook login has not been verified. Run booking.py --login before enabling.'
+}
+if (!(Test-Path -LiteralPath $Python)) { throw 'Python .venv is missing. Complete README setup first.' }
+& $Python $Booking --validate-config
+if ($LASTEXITCODE -ne 0) { throw 'Local booking settings are invalid. Task remains paused.' }
 & (Join-Path $Root 'sync_schedule.ps1')
 Enable-ScheduledTask -TaskName $TaskName -ErrorAction Stop | Out-Null
 $task = Get-ScheduledTask -TaskName $TaskName -ErrorAction Stop
