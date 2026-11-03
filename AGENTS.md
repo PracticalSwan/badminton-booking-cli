@@ -10,7 +10,8 @@
 ## Architecture and contracts
 
 - Windows PowerShell 5.1 and the task named Badminton Court Booking.
-- Desktop Enable Badminton Booking.cmd must launch the text-only menu, not enable booking directly.
+- Root and Desktop `Enable Badminton Booking.cmd` must open the CLI menu, **never** directly enable sending. The root CMD calls `Manage Badminton Booking.cmd`, which uses `scripts/launch_booking.ps1` to create `.venv`/install pinned dependencies only if needed, initialize safe local settings, and open the manager. Existing private settings and pause state must remain unchanged on repeated launches.
+- Main menu: 1 status, 2 schedule submenu, 3 Facebook setup/login, 4 Student IDs, 5 explicit start, 6 indefinite pause, 0 exit. The only displayed booking status values are `RUNNING` (task Ready/Running and no PAUSED) and `PAUSED` (otherwise). Local Student IDs remain fully visible in the interactive CLI.
 - booking_manager.py is the CLI, including a Student ID sub-menu. booking_config.py validates schedule.json and validates/atomically saves the ignored local booking.private.json. Keep the actual chat URL unchanged when editing IDs.
 - schedule.json version 1: send_time as HH:MM, weekly with all seven lowercase weekdays as slot/start/end or null, overrides with YYYY-MM-DD keys pointing to slot or null.
 - Date overrides win; 00:00 send time and overnight court intervals are not supported.
@@ -19,6 +20,8 @@
 - Editing settings must not unpause. stop_booking.ps1 creates PAUSED and disables; start_booking.ps1 explicitly enables and removes PAUSED. sync_schedule.ps1 updates the trigger while preserving disabled state.
 - New installs use scripts/initialize_booking.ps1 to create ignored, synthetic private settings and PAUSED without affecting the scheduler. Once booking.private.json exists, initialization must not change it or the current pause state. enable_booking.ps1 always registers paused; start_booking.ps1 requires auth.ok, successful --validate-config, and a fresh non-sending --check-auth before enabling. booking.py rejects the untouched synthetic example when authenticating or preparing a send.
 
+- CodeGraph is an optional local developer index; `codegraph status` and `codegraph sync` are allowed after source edits. Keep `.codegraph/` ignored, never commit/generated indexes or copy local private runtime state into the graph or tests.
+
 ## Protected and forbidden data
 
 Never commit, upload, or expose browser profiles, cookies, sessions, booking.private.json, auth.ok, PAUSED, state.json, logs, credentials, real student IDs or real recipient URL. **Exception for local usability:** the interactive CLI displays complete student IDs and accepts visible double-entry as expressly requested. Do not echo IDs through remote diagnostic tool output, log them, or put them in Git. Even though GitHub is PRIVATE, source must be sanitized. Inspect .gitignore, use explicit Git staging and run scripts/privacy_check.py on tracked/staged files before every push. No Codex CLI; use the user-selected CodexPro connector.
@@ -26,7 +29,7 @@ Never commit, upload, or expose browser profiles, cookies, sessions, booking.pri
 ## Verification and publication
 
 - Parse and test Python and PowerShell; test valid/invalid times, date overrides, skipped dates, CLI edits, visible Student ID replace/add/remove/cancel, private-file atomicity/validation, and explicit enable guard. Test private files in isolated temporary directories only.
-- Verify Desktop launcher and preserved task state. Do not send actual Facebook messages in automated tests. Live UI/send behavior is not proven by local tests. The live task may be Ready with no PAUSED: check fresh state and never change it just for an onboarding test. Test initialization, mocked registration, and activation failure paths in isolated temporary directories.
+- Verify both CMD entry points and the PowerShell launcher (including isolated first-run Python bootstrap), and preserve live task/private state. Do not send actual Facebook messages in automated tests. Live UI/send behavior is not proven by local tests. The live task may be Ready with no PAUSED: check fresh state and never change it just for an onboarding test. Test initialization, mocked registration, and activation failure paths in isolated temporary directories.
 - Inspect intended changes and staging, privacy audit, then commit/push when authorized (this maintenance pass includes authorization). The privacy audit must inspect **staged Git blobs**, not just working-tree files, and reject real-looking numeric identifiers even when no private config exists (such as on CI).
 - Verify the remote is PRIVATE and the remote HEAD matches. No force-push or history rewriting.
 - Report concrete verification limits and unfinished work. Do not claim remote success unless verified.

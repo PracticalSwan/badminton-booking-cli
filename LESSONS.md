@@ -2,6 +2,14 @@
 
 Read at the start of every maintenance task. Add only evidence-backed findings.
 
+## 2026-11-04
+
+- A working CMD launcher was verified from an isolated first-run directory: Python venv, pinned dependencies, ignored private example, and PAUSED were created; no auth marker, sent history, or message was generated. Reopening preserved schedule, private file, and PAUSED. The live existing launcher was also verified to exit without changing protected files.
+- Windows PowerShell 5.1 treats some redirected Python-launcher stderr as terminating errors under `$ErrorActionPreference='Stop'`; the one-click setup checks installed `py` versions through a quiet `cmd.exe /d /c` probe, allowing safe 3.10 fallback when 3.12/3.11 are absent.
+- Repeated status lookups through live Task Scheduler slowed unit tests. Mock `task_state` in CLI tests; test actual task status separately without mutating it.
+- Main-menu grouping reduces first-run friction while preserving weekly, date-specific, and send-time editing in a schedule submenu. All visible booking status labels are RUNNING or PAUSED; private IDs stay fully visible only in the interactive local CLI.
+- CodeGraph 1.6.2 was already installed; initialized a local project graph (11 source files, 215 nodes, 529 edges at initial index) and added `.codegraph/` to `.gitignore`. Graph indexes are local developer state and must never be staged.
+
 ## 2026-11-03
 
 - Live state can change between handoffs. Never assume the Windows task or PAUSED marker still matches an old report, and never alter an existing task to test first-run setup; use an isolated directory and read-only inspection.

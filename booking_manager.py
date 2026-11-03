@@ -7,8 +7,9 @@ from datetime import date
 from pathlib import Path
 
 from booking_config import (
-    DAYS, ROOT, ConfigError, format_time, load_private, load_schedule,
-    parse_clock, save_private, save_schedule, validate_private, validate_schedule, validate_slot,
+    DAYS, ROOT, ConfigError, format_time, is_example_private, load_private,
+    load_schedule, parse_clock, save_private, save_schedule, validate_private,
+    validate_schedule, validate_slot,
 )
 
 PAUSED = ROOT / "PAUSED"
@@ -33,10 +34,16 @@ def task_state() -> str:
         return "Unavailable"
 
 
+def booking_status() -> str:
+    """Show only user-facing RUNNING/PAUSED, based on both safety controls."""
+    if PAUSED.exists():
+        return "PAUSED"
+    return "RUNNING" if task_state() in ("Ready", "Running") else "PAUSED"
+
+
 def show_settings(config: dict) -> None:
     print("\n=== Badminton booking settings ===")
-    print(f"Automation: {'PAUSED' if PAUSED.exists() else 'Not paused'}")
-    print(f"Windows scheduled task: {task_state()}")
+    print(f"Booking status: {booking_status()}")
     print(f"Daily send time: {config['send_time']} (Asia/Bangkok)")
     print("Weekly bookings:")
     for index, day in enumerate(DAYS, start=1):
@@ -154,19 +161,115 @@ def manage_student_ids() -> None:
             print(f"ERROR: {exc}")
 
 
+def run_auth_action(option: str) -> None:
+    """Run a non-sending browser operation using the launcher's Python environment."""
+    code = subprocess.run([sys.executable, str(ROOT / "booking.py"), option]).returncode
+    if code != 0:
+        print("Facebook verification failed. Check your conversation URL or log in again.")
+    else:
+        print("Messenger access verified. No booking message was sent.")
+
+
+def manage_facebook() -> None:
+    """Configure local Messenger settings without opening or modifying live bookings."""
+    while True:
+        print("\n=== Facebook account and conversation ===")
+        print("1. Set/change conversation URL and Student IDs")
+        print("2. Log in to Facebook in Chrome")
+        print("3. Check login (no message sent)")
+        print("0. Back to main menu")
+        choice = prompt("Select option: ")
+        if choice == "0":
+            return
+        if choice == "2":
+            run_auth_action("--login")
+            continue
+        if choice == "3":
+            run_auth_action("--check-auth")
+            continue
+        if choice != "1":
+            print("Unknown menu choice.")
+            continue
+
+        try:
+            current = load_private()
+            if is_example_private(current):
+                print("First-time setup: replace the example URL and Student ID.")
+            else:
+                print("Press ENTER at either prompt to keep that existing setting.")
+            print("Open your own Facebook Messenger conversation and copy its URL.")
+            url = prompt("Messenger conversation URL: ") or current["chat_url"]
+            raw_ids = prompt("Student IDs (comma-separated, visible locally): ")
+            ids = [item.strip() for item in raw_ids.split(",")] if raw_ids else current["student_ids"]
+            updated = validate_private({"chat_url": url, "student_ids": ids})
+            if is_example_private(updated):
+                raise ConfigError("Replace the example Messenger URL and Student IDs first.")
+            if updated != current:
+                save_private(updated)
+                print("Private settings saved locally; booking status unchanged.")
+            else:
+                print("Settings unchanged.")
+            if prompt("Open Chrome to log in to Facebook now? [Y/n]: ").lower() not in ("n", "no"):
+                run_auth_action("--login")
+        except (ConfigError, OSError) as exc:
+            print(f"ERROR: {exc}")
+
+
+def manage_schedule() -> None:
+    """Keep detailed schedule changes out of the main menu."""
+    while True:
+        config = load_schedule()
+        print("\n=== Booking schedule ===")
+        print("1. Change weekly court times or skip a weekday")
+        print("2. Add/change a date-specific booking or skip")
+        print("3. Remove a date-specific override")
+        print("4. Change daily message send time")
+        print("0. Back to main menu")
+        choice = prompt("Select option: ")
+        if choice == "0":
+            return
+        try:
+            if choice == "1":
+                selection = prompt("Weekday number (1=Mon ... 7=Sun): ")
+                if selection not in map(str, range(1, 8)):
+                    raise ConfigError("Choose a weekday from 1 through 7.")
+                day = DAYS[int(selection) - 1]
+                config["weekly"][day] = ask_slot()
+                save_and_sync(config)
+            elif choice == "2":
+                booking_date = ask_date()
+                config["overrides"][booking_date] = ask_slot()
+                save_and_sync(config)
+            elif choice == "3":
+                booking_date = ask_date()
+                if booking_date not in config["overrides"]:
+                    print("No override for that date; nothing changed.")
+                else:
+                    del config["overrides"][booking_date]
+                    save_and_sync(config)
+            elif choice == "4":
+                new_time = prompt("New daily SEND time (HH:MM, 00:01 to 23:59): ")
+                parse_clock(new_time)
+                config["send_time"] = new_time
+                validate_schedule(config)
+                save_and_sync(config)
+            else:
+                print("Unknown menu choice.")
+        except (ConfigError, RuntimeError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+            print(f"ERROR: {exc}")
+
+
 def main() -> int:
     try:
         while True:
             config = load_schedule()
-            print("\n=== Badminton Booking CLI ===")
-            print("1. Show booking settings and status")
-            print("2. Change weekly booking day/time")
-            print("3. Add/change date-specific booking or skip date")
-            print("4. Remove date-specific override")
-            print("5. Change daily message send time")
-            print("6. ENABLE automatic booking")
-            print("7. DISABLE automatic booking indefinitely")
-            print("8. Manage Student IDs")
+            print(f"\n=== Badminton Booking | {booking_status()} ===")
+            print("1. View booking status and schedule")
+            print("2. Edit booking schedule")
+            print("3. Facebook setup and login")
+            print("4. View/change Student IDs")
+            print("5. Start automatic booking")
+            print("6. Pause automatic booking indefinitely")
             print("0. Exit")
             choice = prompt("Select option: ")
             try:
@@ -175,44 +278,24 @@ def main() -> int:
                 if choice == "1":
                     show_settings(config)
                 elif choice == "2":
-                    selection = prompt("Weekday number (1=Mon ... 7=Sun): ")
-                    if selection not in map(str, range(1, 8)):
-                        raise ConfigError("Choose a weekday from 1 through 7.")
-                    day = DAYS[int(selection) - 1]
-                    config["weekly"][day] = ask_slot()
-                    save_and_sync(config)
+                    manage_schedule()
                 elif choice == "3":
-                    booking_date = ask_date()
-                    config["overrides"][booking_date] = ask_slot()
-                    save_and_sync(config)
+                    manage_facebook()
                 elif choice == "4":
-                    booking_date = ask_date()
-                    if booking_date not in config["overrides"]:
-                        print("No override for that date; nothing changed.")
-                    else:
-                        del config["overrides"][booking_date]
-                        save_and_sync(config)
+                    manage_student_ids()
                 elif choice == "5":
-                    new_time = prompt("New daily SEND time (HH:MM, 00:01 to 23:59): ")
-                    parse_clock(new_time)
-                    config["send_time"] = new_time
-                    validate_schedule(config)
-                    save_and_sync(config)
-                elif choice == "6":
-                    if prompt("Enable scheduled Messenger bookings? Type YES to confirm: ") == "YES":
+                    if prompt("Start automatic Messenger bookings? Type YES to confirm: ") == "YES":
                         run_control("start_booking.ps1")
                     else:
                         print("Cancelled.")
-                elif choice == "7":
+                elif choice == "6":
                     run_control("stop_booking.ps1")
-                elif choice == "8":
-                    manage_student_ids()
                 else:
                     print("Unknown menu choice.")
             except (ConfigError, RuntimeError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
                 print(f"ERROR: {exc}")
     except (KeyboardInterrupt, EOFError):
-        print("\nExiting; current enabled/disabled status unchanged.")
+        print("\nExiting; booking status unchanged.")
         return 0
     except ConfigError as exc:
         print(f"Cannot open booking settings: {exc}", file=sys.stderr)

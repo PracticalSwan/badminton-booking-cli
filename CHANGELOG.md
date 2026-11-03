@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-11-04 — One-click CLI setup and simpler booking status
+
+- Added root `Enable Badminton Booking.cmd` and safe PowerShell bootstrap that creates `.venv` and installs pinned requirements when necessary, then opens the CLI without automatically starting a booking.
+- Reduced the main CLI to status, schedule, Facebook setup/login, Student IDs, start, and pause. Kept detailed weekly/date/time operations in a schedule submenu.
+- Standardized the user-facing booking status to RUNNING or PAUSED, based on the Windows task and PAUSED marker.
+- Added a local Facebook configuration/login flow; validated and atomically saved private settings, preserving existing state on repeated launches.
+- Expanded synthetic CLI regression coverage, exercised root CMD and isolated fresh-install workflows without sending messages, and added CI PowerShell parsing for the new launcher.
+- Initialized project CodeGraph and excluded `.codegraph/` from Git. Updated README, maintainer instructions, lessons, and project memory.
+
+
 ## 2026-11-03 — Follow-up activation safety and clean-clone verification
 
 - Rechecked the published repository via a clean Windows clone, fresh virtual environment, pinned dependencies, and non-sending synthetic configuration workflow.

@@ -41,6 +41,7 @@ class PrivateManagerTests(unittest.TestCase):
             patch("booking_manager.save_private", side_effect=lambda x: save_private(x, self.path)),
             patch("booking_manager.save_and_sync") as scheduler,
             patch("booking_manager.run_control") as controls,
+            patch("booking_manager.task_state", return_value="Ready"),
             contextlib.redirect_stdout(output),
         ):
             self.assertEqual(booking_manager.main(), 0)
@@ -57,7 +58,7 @@ class PrivateManagerTests(unittest.TestCase):
         )
 
     def test_replace_one_id_keeps_others_and_recipient(self):
-        output = self.run_menu(["8", "1", "2", "0", "0"], ["000003", "000003"])
+        output = self.run_menu(["4", "1", "2", "0", "0"], ["000003", "000003"])
         updated = load_private(self.path)
         self.assertEqual(updated["student_ids"], ["000001", "000003"])
         self.assertEqual(updated["chat_url"], SAMPLE_URL)
@@ -67,23 +68,23 @@ class PrivateManagerTests(unittest.TestCase):
         self.assertNotIn("******", output)
 
     def test_add_id_preserves_order(self):
-        self.run_menu(["8", "2", "0", "0"], ["000003", "000003"])
+        self.run_menu(["4", "2", "0", "0"], ["000003", "000003"])
         self.assertEqual(load_private(self.path)["student_ids"], ["000001", "000002", "000003"])
 
     def test_remove_id_requires_confirmation(self):
-        output = self.run_menu(["8", "3", "1", "REMOVE", "0", "0"])
+        output = self.run_menu(["4", "3", "1", "REMOVE", "0", "0"])
         self.assertEqual(load_private(self.path)["student_ids"], ["000002"])
         self.assertIn("2. 000002", output)
         self.assertNotIn("******", output)
 
     def test_cancel_remove_has_no_effect(self):
         before = self.path.read_bytes()
-        self.run_menu(["8", "3", "1", "no", "0", "0"])
+        self.run_menu(["4", "3", "1", "no", "0", "0"])
         self.assertEqual(self.path.read_bytes(), before)
 
     def test_bad_confirmation_has_no_effect(self):
         before = self.path.read_bytes()
-        output = self.run_menu(["8", "1", "1", "0", "0"], ["000003", "000004"])
+        output = self.run_menu(["4", "1", "1", "0", "0"], ["000003", "000004"])
         self.assertEqual(self.path.read_bytes(), before)
         self.assertIn("confirmation did not match", output)
         self.assertNotIn("000003", output)
@@ -92,18 +93,18 @@ class PrivateManagerTests(unittest.TestCase):
         for item in ("", "abcd", "000001", "１２３４５６"):
             with self.subTest(value_type=item):
                 before = self.path.read_bytes()
-                self.run_menu(["8", "2", "0", "0"], [item, item])
+                self.run_menu(["4", "2", "0", "0"], [item, item])
                 self.assertEqual(self.path.read_bytes(), before)
 
     def test_invalid_index_does_not_modify_file(self):
         before = self.path.read_bytes()
-        self.run_menu(["8", "1", "19", "0", "0"])
+        self.run_menu(["4", "1", "19", "0", "0"])
         self.assertEqual(self.path.read_bytes(), before)
 
     def test_current_one_id_cannot_be_removed(self):
         save_private({"chat_url": SAMPLE_URL, "student_ids": ["000001"]}, self.path)
         before = self.path.read_bytes()
-        self.run_menu(["8", "3", "0", "0"])
+        self.run_menu(["4", "3", "0", "0"])
         self.assertEqual(self.path.read_bytes(), before)
 
 

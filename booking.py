@@ -11,8 +11,8 @@ from zoneinfo import ZoneInfo
 from playwright.sync_api import sync_playwright
 
 from booking_config import (
-    ROOT, ConfigError, booking_for_date, compose_message, load_private,
-    load_schedule, parse_clock,
+    ROOT, ConfigError, booking_for_date, compose_message, is_example_private,
+    load_private, load_schedule, parse_clock,
 )
 
 PROFILE_DIR = ROOT / "chrome_profile"
@@ -36,8 +36,7 @@ def log(message: str) -> None:
 def load_operational_private() -> dict:
     """Reject untouched synthetic onboarding values before any browser/send work."""
     private = load_private()
-    if (private["chat_url"].rstrip("/") == "https://www.facebook.com/messages/t/0000000"
-            or "000000" in private["student_ids"]):
+    if is_example_private(private):
         raise ConfigError("Replace the example Messenger URL and Student IDs in booking.private.json first.")
     return private
 

@@ -28,6 +28,7 @@ __pycache__/
 !.env.example
 .ai-bridge/
 .codexpro/
+.codegraph/
 *.tmp
 
 # Editors / OS

@@ -131,6 +131,12 @@ def validate_private(data: object) -> dict:
     return {"chat_url": url, "student_ids": list(ids)}
 
 
+def is_example_private(data: dict) -> bool:
+    """Identify synthetic onboarding values that must never be used for booking."""
+    return (data["chat_url"].rstrip("/") == "https://www.facebook.com/messages/t/0000000"
+            or "000000" in data["student_ids"])
+
+
 def load_private(path: Path = PRIVATE_PATH) -> dict:
     try:
         data = json.loads(path.read_text(encoding="utf-8-sig"))

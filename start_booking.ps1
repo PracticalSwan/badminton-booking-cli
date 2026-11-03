@@ -33,4 +33,4 @@ if (Test-Path -LiteralPath $PauseFile) {
     Remove-Item -LiteralPath $PauseFile -Force -ErrorAction Stop
 }
 if (Test-Path -LiteralPath $PauseFile) { throw 'Pause marker still present.' }
-Write-Host "Badminton booking is ACTIVE. Scheduled task: $($task.State)." -ForegroundColor Green
+Write-Host "Badminton booking is RUNNING. Scheduled task: $($task.State)." -ForegroundColor Green

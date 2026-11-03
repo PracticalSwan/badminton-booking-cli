@@ -4,6 +4,30 @@ Windows-only, text-based automation for sending badminton court booking requests
 
 > **Access:** This GitHub repository is private. Ask the owner for GitHub collaborator access before cloning. This guide does not require or include the original author's private settings or browser profile.
 
+## Quick start: one file
+
+**After you have downloaded or cloned this repository**, double-click **`Enable Badminton Booking.cmd`** in the project folder. If you already have the Desktop launcher with the same name, use that instead.
+
+On first launch, it creates `.venv`, installs the pinned Python packages if needed, and makes your **local-only** settings file. It starts **PAUSED**: nothing is booked or sent automatically. Subsequent launches keep your configured schedule, Facebook session, Student IDs, and running/paused state unchanged.
+
+The main menu is intentionally short:
+
+| Menu | What to do |
+| --- | --- |
+| **1** | View booking status and schedule |
+| **2** | Edit weekly bookings, date-specific skips/overrides, or send time |
+| **3** | Set your own Messenger conversation URL, enter Student IDs, and log in/check login |
+| **4** | View or edit your Student IDs (fully visible on your local console) |
+| **5** | Start automatic booking, with explicit `YES` confirmation |
+| **6** | Pause automatic booking indefinitely |
+| **0** | Exit without changing the booking state |
+
+**RUNNING** means automatic booking is enabled and waiting for its scheduled send time, not that a court is already booked. **PAUSED** means automatic booking is not enabled.
+
+For a new installation: choose **3** to enter your own Messenger conversation URL and Student IDs, then log in to your own Facebook account in the Chrome window. Choose **2** to set your weekly booking schedule and sending time. Choose **5** only when ready to begin automatic booking. You can always choose **6** to pause indefinitely.
+
+**Before running the launcher:** install Python 3.10–3.12 (3.12 recommended) with the Windows `py` launcher, and Google Chrome. Git is needed only if you clone or contribute using Git. If you are cloning the private repository, you must have collaborator access. Detailed manual setup and troubleshooting follow.
+
 ## 1. Prerequisites (Windows)
 
 - Windows 10/11 with Windows PowerShell 5.1, Task Scheduler, and an interactive Windows user session.
@@ -18,7 +42,7 @@ The scheduled task runs only for the configured interactive Windows user. Keep t
 
 ## 2. Download and prepare the project
 
-Open **Windows PowerShell** and run these commands. All later commands assume PowerShell is in the repository root, the directory containing `booking.py` and `requirements.txt`:
+**Optional manual setup (for troubleshooting or contributors):** Normal users can skip these commands and simply double-click `Enable Badminton Booking.cmd` after downloading the repository. If you prefer manual setup, open **Windows PowerShell** and run the following. All later commands assume PowerShell is in the repository root, the directory containing `booking.py` and `requirements.txt`:
 
 ~~~powershell
 git clone https://github.com/PracticalSwan/badminton-booking-cli.git
@@ -72,31 +96,31 @@ Launch the CLI from PowerShell:
 .\.venv\Scripts\python.exe booking_manager.py
 ~~~
 
-Or double-click **Manage Badminton Booking.cmd** in the project directory. Use the numbered choices:
+Or double-click **Enable Badminton Booking.cmd** (the recommended launcher). Use the simplified main menu:
 
 | Choice | Purpose |
 | --- | --- |
-| 1 | View schedule, date overrides, send time, pause state, and Windows task state |
-| 2 | Change a Monday–Sunday court booking or mark that weekday as skipped |
-| 3 | Add/change a specific calendar date's booking, or skip that date |
-| 4 | Remove a date override and return to the weekly rule |
-| 5 | Change the daily Messenger send time |
-| 6 | Enable scheduled sending (requires typing `YES`) |
-| 7 | Pause sending indefinitely |
-| 8 | Show, replace, add, or remove Student IDs |
+| 1 | View current RUNNING/PAUSED status, weekly schedule, and date overrides |
+| 2 | Open the schedule submenu: weekly slots, date overrides/skips, and daily send time |
+| 3 | Configure your Messenger conversation, enter Student IDs, or log in/check login |
+| 4 | Show, replace, add, or remove Student IDs |
+| 5 | Start automatic sending (requires typing `YES`) |
+| 6 | Pause sending indefinitely |
 | 0 | Exit without changing the task's state |
 
 The versioned sample schedule uses **08:00 Bangkok time** for sending; the initial weekday bookings are Monday–Friday 16:30–18:00, Sunday 15:30–17:00, and Saturday skipped. **Set your own days and court hours before enabling.** Your schedule is saved in `schedule.json`. Date-specific overrides (`YYYY-MM-DD`) take priority; a skipped day has `null` rather than a slot.
+
+In main-menu **2**, choose **1** for weekly slots, **2** for a date-specific booking or skip, **3** to remove a date override, or **4** for the daily send time. Select **0** to return to the main menu.
 
 All times use 24-hour `HH:MM`. Send time must be from `00:01` to `23:59`. Court bookings must start and end on the same date and have an end time after the start. When changing send time, the CLI updates the existing Windows trigger if installed without changing its enabled/disabled state.
 
 ### Editing Student IDs later
 
-Select **8** in the CLI. The submenu displays **complete Student IDs locally**, with list positions, and supports replace, add, or remove. Replacement and addition use **visible double-entry confirmation**, and removal requires typing `REMOVE`. This is intentional: do not screenshot, screen-share, or publish this submenu with actual IDs visible. Editing IDs retains your Messenger URL and does **not** enable automation. If private settings change while a message is being prepared, the sender cancels the stale message.
+Select **4** in the CLI. The submenu displays **complete Student IDs locally**, with list positions, and supports replace, add, or remove. Replacement and addition use **visible double-entry confirmation**, and removal requires typing `REMOVE`. This is intentional: do not screenshot, screen-share, or publish this submenu with actual IDs visible. Editing IDs retains your Messenger URL and does **not** enable automation. If private settings change while a message is being prepared, the sender cancels the stale message.
 
 ## 5. Authenticate your own Facebook account (no sending)
 
-With Chrome installed and `booking.private.json` configured, run:
+From the single launcher, select **3** to enter your own Messenger conversation URL and Student IDs; when prompted, choose to open Chrome for manual login. To check a saved session later, use **3 → 3** (non-sending). If you prefer the manual command line, with Chrome installed and `booking.private.json` configured, run:
 
 ~~~powershell
 .\.venv\Scripts\python.exe booking.py --login
@@ -121,7 +145,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\enable_booking.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install_desktop_launcher.ps1
 ~~~
 
-The first command installs/updates the **Badminton Court Booking** Windows Scheduled Task and **always leaves it disabled with `PAUSED` present**. It never activates a fresh installation. The task starts one minute before the daily send time, but does not send while paused. The second command creates/overwrites **Enable Badminton Booking.cmd** on *your* Windows Desktop; despite its historical name, that launcher now **opens the CLI menu**, not the sender or the enable action. Do not run the Desktop installer if you need to preserve an unrelated file with the same Desktop name.
+These commands are optional when using the single-launcher menu; option **5** registers a missing task as part of starting automation. For manual setup, the first command installs/updates the **Badminton Court Booking** Windows Scheduled Task and **always leaves it disabled with `PAUSED` present**. It never activates a fresh installation. The task starts one minute before the daily send time, but does not send while paused. The second command creates/overwrites **Enable Badminton Booking.cmd** on *your* Windows Desktop; despite its historical name, that launcher now **opens the CLI menu**, not the sender or the enable action. Do not run the Desktop installer if you need to preserve an unrelated file with the same Desktop name.
 
 Both scripts operate on the current Windows user's environment; do not register the task under somebody else's Windows account. There is one task with this name per Windows machine, so separate clones using the same task name can conflict.
 
@@ -136,7 +160,7 @@ Expected after first installation: task **Disabled**, and `Test-Path` returns **
 
 ## 7. Enable, pause, and operate
 
-**Only when your schedule, recipient, IDs, and Facebook login are correct**, select **6** in the CLI and type `YES`. Alternatively run:
+**Only when your schedule, recipient, IDs, and Facebook login are correct**, select **5** in the CLI and type `YES`. Alternatively run:
 
 ~~~powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\start_booking.ps1
@@ -144,7 +168,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\start_booking.ps1
 
 The enable script requires the local login marker, validates your configuration, and runs a fresh, **non-sending** Messenger `--check-auth` (which briefly opens Chrome) before synchronizing the trigger. It enables the Windows task and removes `PAUSED` only after successful verification. An expired or inaccessible Facebook session **blocks activation**; run `--login` again, then retry. It does **not** immediately send a booking message; the scheduled run handles the configured time.
 
-To stop bookings **indefinitely**, choose **7** in the CLI or run:
+To stop bookings **indefinitely**, choose **6** in the CLI or run:
 
 ~~~powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\stop_booking.ps1
@@ -198,6 +222,8 @@ The privacy check audits tracked/staged Git blobs for blocked paths and likely i
 
 | File | Responsibility |
 | --- | --- |
+| `Enable Badminton Booking.cmd` | Recommended single-click entry point; opens safe setup and CLI controls |
+| `Manage Badminton Booking.cmd` / `scripts/launch_booking.ps1` | Initializes the local Python environment and runs the CLI; does not enable sending |
 | `booking.py` | Manual login, non-sending checks, Messenger sender, safety gates |
 | `booking_manager.py` | Interactive text menu and locally visible Student ID editing |
 | `booking_config.py` | Schedule/private validation and atomic saves |
@@ -209,3 +235,7 @@ The privacy check audits tracked/staged Git blobs for blocked paths and likely i
 | `scheduled_run.cmd` | Actual scheduled sender (not a test command) |
 | `tests/` | Unit, synthetic integration, safety and first-run checks |
 | `AGENTS.md`, `LESSONS.md`, `CHANGELOG.md`, `MEMORY.md` | Maintainer instructions and project history |
+
+### Local CodeGraph (optional for contributors)
+
+CodeGraph is an optional developer index, not part of the runtime. Run `codegraph status` and `codegraph sync` from the project root if CodeGraph is installed. Its `.codegraph/` database is Git-ignored; **never commit its indexes or private runtime files**.

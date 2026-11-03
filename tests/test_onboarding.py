@@ -48,6 +48,18 @@ class FirstRunTests(unittest.TestCase):
                         content.index("Register-ScheduledTask -TaskName"))
         self.assertIn("Disable-ScheduledTask -TaskName $TaskName", content)
 
+    def test_one_click_launcher_only_opens_setup_and_menu(self):
+        entry = (ROOT / "Enable Badminton Booking.cmd").read_text(encoding="utf-8")
+        manager = (ROOT / "Manage Badminton Booking.cmd").read_text(encoding="utf-8")
+        bootstrap = (ROOT / "scripts" / "launch_booking.ps1").read_text(encoding="utf-8")
+        self.assertIn("Manage Badminton Booking.cmd", entry)
+        self.assertIn("scripts\\launch_booking.ps1", manager)
+        self.assertIn("initialize_booking.ps1", bootstrap)
+        self.assertIn("booking_manager.py", bootstrap)
+        self.assertNotIn("scheduled_run.cmd", bootstrap)
+        self.assertNotIn("start_booking.ps1", bootstrap)
+        self.assertNotIn("stop_booking.ps1", bootstrap)
+
     def test_explicit_start_checks_auth_and_config_before_enabling(self):
         content = (ROOT / "start_booking.ps1").read_text(encoding="utf-8")
         self.assertLess(content.index("Test-Path -LiteralPath $AuthMarker"),
