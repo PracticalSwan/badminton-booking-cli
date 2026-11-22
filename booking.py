@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError, sync_playwright
 
 from booking_config import (
     ROOT, ConfigError, booking_for_date, compose_message, is_example_private,
@@ -154,7 +154,7 @@ def wait_until(target: datetime) -> None:
         time.sleep(3 if remaining > 10 else 0.15 if remaining > 1 else 0.02)
 
 
-def run_booking() -> int:
+def run_booking(*, send_now: bool = False) -> int:
     now = datetime.now(TZ)
     day = now.date()
     # Fail closed even for manually launched copies while the Windows task is disabled.
@@ -180,20 +180,30 @@ def run_booking() -> int:
 
     target = datetime.combine(day, parse_clock(schedule["send_time"]), tzinfo=TZ)
     latest = target + timedelta(minutes=MAX_LATE_MINUTES)
-    if now > latest:
+    if now > latest and not send_now:
         log(f"Missed the configured send window by more than {MAX_LATE_MINUTES} minutes. Nothing sent.")
         return 3
 
     message = compose_message(slot, private)
+    if send_now:
+        log("Explicit send-now requested; scheduled time cutoff is bypassed for this one attempt.")
     log(f"Preparing booking request for {day.isoformat()} (message contents withheld).")
     with sync_playwright() as playwright:
         context = open_context(playwright)
         try:
             page = get_page(context)
-            page.goto(private["chat_url"], wait_until="domcontentloaded", timeout=60000)
-            composer = find_composer(page, timeout_ms=30000)
-            composer.click()
-            composer.fill(message)
+            # Retry only preparation failures. Never retry after pressing Enter: delivery may be ambiguous.
+            for attempt in range(2):
+                try:
+                    page.goto(private["chat_url"], wait_until="domcontentloaded", timeout=45000)
+                    composer = find_composer(page, timeout_ms=30000)
+                    # fill() focuses contenteditable itself; click() can time out behind overlays.
+                    composer.fill(message, timeout=15000)
+                    break
+                except (PlaywrightTimeoutError, RuntimeError) as exc:
+                    if attempt == 1:
+                        raise
+                    log(f"Messenger not ready ({type(exc).__name__}); retrying preparation once.")
             log("Messenger composer prepared.")
 
             if datetime.now(TZ) < target:
@@ -213,7 +223,7 @@ def run_booking() -> int:
             if load_operational_private() != private:
                 log("Private booking settings changed while preparing; stale message not sent.")
                 return 0
-            if datetime.now(TZ) > latest:
+            if datetime.now(TZ) > latest and not send_now:
                 log("Send window expired while preparing; nothing sent.")
                 return 3
 
@@ -257,6 +267,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Badminton Messenger booking automation")
     parser.add_argument("--login", action="store_true", help="Open Facebook for manual login")
     parser.add_argument("--check-auth", action="store_true", help="Verify saved Facebook session")
+    parser.add_argument("--send-now", action="store_true", help="Explicit one-time booking for today's configured slot; bypass time cutoff, keep duplicate guard")
     parser.add_argument("--self-test", action="store_true", help="Validate current weekly schedule (no Facebook)")
     parser.add_argument("--validate-config", action="store_true", help="Validate schedule and own private settings, without Facebook")
     args = parser.parse_args()
@@ -269,7 +280,7 @@ def main() -> int:
             return self_test()
         if args.validate_config:
             return validate_installation()
-        return run_booking()
+        return run_booking(send_now=args.send_now)
     except ConfigError as exc:
         print(f"Configuration error: {exc}", file=sys.stderr)
         return 5

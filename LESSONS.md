@@ -2,6 +2,12 @@
 
 Read at the start of every maintenance task. Add only evidence-backed findings.
 
+## 2026-11-22
+
+- The enabled task launched at 07:59 on Sunday and exited with result 4 after a Messenger `TimeoutError` at 07:59:41, before logging composer readiness. A fresh non-sending check at 09:00 verified an accessible composer; intermittent page/composer preparation is a plausible cause, while its precise step was not logged.
+- An explicitly authorized `--send-now` at 09:01 submitted the configured Sunday 15:30–17:00 request once, cleared the composer and updated ignored `state.json`. A cleared composer is not an independent court confirmation.
+- Playwright `fill()` focuses editable elements without a separate `click()`; remove that unnecessary interaction. A single bounded retry of preparation before Enter can recover transient errors without risking automatic duplicate submissions after Enter. Keep scheduled time-cutoff, pause and duplicate guards.
+
 ## 2026-11-04
 
 - A working CMD launcher was verified from an isolated first-run directory: Python venv, pinned dependencies, ignored private example, and PAUSED were created; no auth marker, sent history, or message was generated. Reopening preserved schedule, private file, and PAUSED. The live existing launcher was also verified to exit without changing protected files.

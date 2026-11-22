@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-11-22 — Recover Sunday booking and reduce transient composer failures
+
+- Diagnosed the scheduled 07:59 task: Messenger preparation timed out before submission; the Windows task and saved Facebook session were otherwise active.
+- Added an explicit `booking.py --send-now` recovery path that bypasses the normal send cutoff only when intentionally invoked, retaining same-day duplicate, PAUSED, date-skip and stale-settings checks.
+- Removed the redundant contenteditable click and allowed one retry of page/composer preparation on transient timeouts before Enter; no automatic retry after a possible submission.
+- Completed a single authorized live recovery for the 15:30–17:00 Sunday slot; the script confirmed a cleared composer and recorded today's send in ignored local history. Court reservation/delivery beyond the composer check is not independently verified.
+- Expanded non-sending regression tests for late explicit send and recovery retries.
+
+
 ## 2026-11-04 — One-click CLI setup and simpler booking status
 
 - Added root `Enable Badminton Booking.cmd` and safe PowerShell bootstrap that creates `.venv` and installs pinned requirements when necessary, then opens the CLI without automatically starting a booking.

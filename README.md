@@ -176,7 +176,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\stop_booking.ps1
 
 This creates `PAUSED`, stops any running scheduled task, and disables it. Restarting Windows or changing schedule/IDs does not automatically resume a paused installation. Do not manually delete `PAUSED`; use the enable control when you deliberately want to resume.
 
-The sender also enforces one successful submission attempt per date, a **five-minute cutoff** after the send time, and final rechecks for pause/schedule/private-setting changes before pressing Enter. A corrupted `state.json` blocks sending to avoid duplicates. Never use `booking.py` without an option for a "test": on an active installation it is the **real sender**.
+The sender also enforces one successful submission attempt per date, a **five-minute cutoff** after the send time, and final rechecks for pause/schedule/private-setting changes before pressing Enter. If a scheduled send fails *before submission*, check local logs, booking history and the Messenger conversation for any existing request before explicitly recovering with `.\.venv\Scripts\python.exe booking.py --send-now`. This manual-only option sends today's configured slot without the time cutoff, but still checks PAUSED, skipped dates and duplicate history. **Never retry a submission with ambiguous delivery status**, and never run `--send-now` as an automated scheduled action. A corrupted `state.json` blocks sending to avoid duplicates. Never use `booking.py` without an option for a "test": on an active installation it is the **real sender**.
 
 ## 8. Troubleshooting
 

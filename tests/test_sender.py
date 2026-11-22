@@ -19,7 +19,7 @@ class SenderTests(unittest.TestCase):
         self.config = load_schedule(FIXTURE)
         self.now = datetime(2026, 10, 19, 8, 0, tzinfo=ZoneInfo("Asia/Bangkok"))
 
-    def invoke(self, *, paused=(False, False), sent=(False, False), schedules=None, privates=None, now=None):
+    def invoke(self, *, paused=(False, False), sent=(False, False), schedules=None, privates=None, now=None, send_now=False, prepare_timeouts=0):
         actual = now or self.now
 
         class FakeClock(datetime):
@@ -41,8 +41,13 @@ class SenderTests(unittest.TestCase):
             page = stack.enter_context(patch.object(booking, "get_page"))
             composer = stack.enter_context(patch.object(booking, "find_composer"))
             composer.return_value.text_content.return_value = ""
+            if prepare_timeouts:
+                composer.return_value.fill.side_effect = [
+                    booking.PlaywrightTimeoutError("synthetic composer timeout")
+                    for _ in range(prepare_timeouts)
+                ] + [None]
             mark = stack.enter_context(patch.object(booking, "mark_sent"))
-            code = booking.run_booking()
+            code = booking.run_booking(send_now=send_now)
             return code, composer, mark, browser, context
 
     def test_untouched_example_blocks_send_before_browser(self):
@@ -109,6 +114,33 @@ class SenderTests(unittest.TestCase):
         code, composer, mark, browser, _ = self.invoke(now=late)
         self.assertEqual(code, 3)
         browser.assert_not_called()
+        composer.return_value.press.assert_not_called()
+        mark.assert_not_called()
+
+    def test_explicit_send_now_after_cutoff_preserves_once_only_guard(self):
+        late = self.now.replace(hour=9, minute=0)
+        code, composer, mark, _, _ = self.invoke(now=late, send_now=True)
+        self.assertEqual(code, 0)
+        composer.return_value.press.assert_called_once_with("Enter")
+        mark.assert_called_once_with(date(2026, 10, 19))
+
+        code, composer, mark, browser, _ = self.invoke(now=late, sent=(True,), send_now=True)
+        self.assertEqual(code, 0)
+        browser.assert_not_called()
+        composer.return_value.press.assert_not_called()
+        mark.assert_not_called()
+
+    def test_transient_preparation_failure_retries_without_duplicate_send(self):
+        code, composer, mark, _, _ = self.invoke(prepare_timeouts=1)
+        self.assertEqual(code, 0)
+        self.assertEqual(composer.return_value.fill.call_count, 2)
+        composer.return_value.press.assert_called_once_with("Enter")
+        mark.assert_called_once()
+
+    def test_two_preparation_failures_stop_without_sending(self):
+        code, composer, mark, _, _ = self.invoke(prepare_timeouts=2)
+        self.assertEqual(code, 4)
+        self.assertEqual(composer.return_value.fill.call_count, 2)
         composer.return_value.press.assert_not_called()
         mark.assert_not_called()
 
